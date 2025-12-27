@@ -1,0 +1,2740 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:;">
+    <title>Eval'Parcours II - Outil d'évaluation de la transition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2b4c7e;
+            --primary-light: #3d6ba8;
+            --primary-dark: #1a2f4d;
+            --accent: #567ba3;
+            --accent-light: #7599bd;
+            --success: #3d7a5c;
+            --warning: #c97d3a;
+            --bg-main: #f8fafb;
+            --bg-secondary: #eef2f7;
+            --bg-card: #ffffff;
+            --text-primary: #1e2939;
+            --text-secondary: #5a6c7d;
+            --text-tertiary: #8b9aad;
+            --border: #d4dde6;
+            --border-light: #e8eef5;
+            --shadow-sm: 0 2px 8px rgba(43, 76, 126, 0.08);
+            --shadow-md: 0 4px 16px rgba(43, 76, 126, 0.12);
+            --shadow-lg: 0 8px 24px rgba(43, 76, 126, 0.16);
+        }
+
+```
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Nunito', sans-serif;
+        background: var(--bg-main);
+        color: var(--text-primary);
+        line-height: 1.6;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+    }
+
+    /* Security Alert */
+    .security-alert {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        display: none;
+    }
+
+    .security-alert.show {
+        display: block;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .security-alert.error {
+        background: #f8d7da;
+        border-color: var(--warning);
+    }
+
+    .security-alert.success {
+        background: #d4edda;
+        border-color: var(--success);
+    }
+
+    /* Header */
+    header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: fadeInDown 0.6s ease-out;
+    }
+
+    .logo {
+        display: inline-block;
+        padding: 0.6rem 2rem;
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        color: white;
+        border-radius: 60px;
+        font-family: 'Bitter', serif;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        letter-spacing: 0.01em;
+        box-shadow: var(--shadow-md);
+    }
+
+    .tagline {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    /* Navigation Steps */
+    .steps {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 3rem;
+        animation: fadeIn 0.8s ease-out;
+        flex-wrap: wrap;
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 1rem 1.5rem;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 2px solid var(--border);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .step.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        box-shadow: var(--shadow-md);
+    }
+
+    .step.completed {
+        background: var(--success);
+        color: white;
+        border-color: var(--success);
+    }
+
+    .step-number {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--bg-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .step.active .step-number,
+    .step.completed .step-number {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Phase Container */
+    .phase {
+        display: none;
+    }
+
+    .phase.active {
+        display: block;
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    /* Card Styles */
+    .card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+        margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+        font-family: 'Bitter', serif;
+        font-size: 1.7rem;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+    .card-subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    /* Configuration Phase */
+    .config-layout {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+    }
+
+    .items-library {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+    }
+
+    .domain-section {
+        margin-bottom: 2rem;
+    }
+
+    .domain-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.2rem;
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        color: white;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .domain-header:hover {
+        transform: translateX(4px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .domain-icon {
+        font-size: 1.6rem;
+    }
+
+    .domain-name {
+        font-weight: 700;
+        font-size: 1.15rem;
+        flex: 1;
+    }
+
+    .domain-count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+
+    .items-grid {
+        display: grid;
+        gap: 0.8rem;
+        margin-top: 1rem;
+        padding-left: 1rem;
+    }
+
+    .item {
+        padding: 1.2rem;
+        background: var(--bg-secondary);
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        cursor: move;
+        transition: all 0.3s ease;
+    }
+
+    .item:hover {
+        background: var(--bg-card);
+        border-color: var(--primary-light);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .item.selected {
+        background: linear-gradient(135deg, #e8f4f8 0%, #d4e9f2 100%);
+        border: 2px solid var(--accent);
+        box-shadow: 0 0 0 3px rgba(86, 123, 163, 0.2);
+        position: relative;
+    }
+
+    .item.selected::after {
+        content: '✓';
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: var(--success);
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .item.selected .item-add-btn {
+        background: var(--success);
+        color: white;
+    }
+
+    .item.dragging {
+        opacity: 0.5;
+    }
+
+    .item-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .item-grip {
+        color: var(--text-tertiary);
+        font-size: 1.2rem;
+    }
+
+    .item-text {
+        flex: 1;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+
+    .item-add-btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .item-add-btn:hover {
+        background: var(--primary-light);
+        transform: scale(1.1);
+    }
+
+    .selected-items-panel {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+        border: 2px dashed var(--border);
+        position: sticky;
+        top: 2rem;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .selected-items-panel.drag-over {
+        border-color: var(--primary);
+        background: var(--bg-secondary);
+    }
+
+    .selected-item {
+        padding: 1rem;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 0.8rem;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .selected-item-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .selected-item-domain {
+        font-size: 0.75rem;
+        color: white;
+        background: var(--primary);
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-weight: 700;
+    }
+
+    .selected-item-text {
+        flex: 1;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .selected-item-remove {
+        background: var(--warning);
+        color: white;
+        border: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .selected-item-remove:hover {
+        background: #b66a2f;
+        transform: scale(1.1);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-tertiary);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    /* Buttons */
+    .btn-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        justify-content: flex-end;
+    }
+
+    .btn {
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Nunito', sans-serif;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-light);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+        background: transparent;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+
+    .btn-secondary:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-accent {
+        background: var(--accent);
+        color: white;
+    }
+
+    .btn-accent:hover {
+        background: var(--accent-light);
+        transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* Question Phase */
+    .question-block {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-sm);
+        animation: fadeInUp 0.4s ease-out;
+    }
+
+    .question-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .question-number {
+        background: var(--primary);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+        font-size: 1.1rem;
+    }
+
+    .question-content {
+        flex: 1;
+    }
+
+    .question-domain-tag {
+        display: inline-block;
+        font-size: 0.75rem;
+        color: white;
+        background: var(--primary-light);
+        padding: 0.2rem 0.8rem;
+        border-radius: 4px;
+        margin-bottom: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .question-text {
+        font-size: 1.05rem;
+        font-weight: 600;
+        line-height: 1.6;
+        color: var(--text-primary);
+        margin-bottom: 0.8rem;
+    }
+
+    .rating-scale {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+
+    .rating-option {
+        position: relative;
+    }
+
+    .rating-option input[type="radio"] {
+        display: none;
+    }
+
+    .rating-label {
+        display: block;
+        padding: 1.2rem 1rem;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: var(--bg-main);
+        height: 100%;
+    }
+
+    .rating-label:hover {
+        border-color: var(--primary);
+        background: var(--bg-card);
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .rating-option input[type="radio"]:checked + .rating-label {
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: white;
+        border-color: var(--primary);
+        transform: scale(1.05);
+    }
+
+    .rating-value {
+        display: block;
+        font-weight: 700;
+        font-size: 2rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .rating-label-text {
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .rating-description {
+        font-size: 0.8rem;
+        opacity: 0.85;
+    }
+
+    .progress-indicator {
+        background: var(--bg-secondary);
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .progress-text {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .progress-bar {
+        background: var(--border);
+        height: 8px;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 20px;
+    }
+
+    /* Results Phase */
+    .results-summary {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+    }
+
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+
+    .result-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+    }
+
+    .result-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .result-domain {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .result-score {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        font-family: 'Bitter', serif;
+    }
+
+    .result-label {
+        font-size: 0.9rem;
+        color: var(--text-tertiary);
+    }
+
+    /* Import/Export */
+    .import-section {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--accent);
+    }
+
+    .file-input-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .file-input-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.8rem 1.5rem;
+        background: var(--primary);
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: all 0.3s ease;
+    }
+
+    .file-input-label:hover {
+        background: var(--primary-light);
+    }
+
+    /* Info boxes */
+    .info-box {
+        background: #f0f7ff;
+        border-left: 4px solid var(--accent);
+        padding: 1.2rem;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+        font-size: 0.95rem;
+    }
+
+    .info-box strong {
+        color: var(--primary);
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 1024px) {
+        .config-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .selected-items-panel {
+            position: relative;
+            max-height: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            padding: 1rem;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+        }
+
+        .steps {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .step {
+            padding: 0.8rem 1rem;
+        }
+
+        .card {
+            padding: 1.5rem;
+        }
+
+        .rating-scale {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .btn-group {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .item {
+            cursor: default;
+        }
+
+        .item-grip {
+            display: none;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .rating-scale {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Utility */
+    .hidden {
+        display: none !important;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .mt-2 {
+        margin-top: 2rem;
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="container">
+        <div class="security-alert" id="securityAlert"></div>
+
+```
+    <header>
+        <div class="logo">Eval'Parcours II</div>
+        <p class="tagline">Outil d'aide à la transition pour les événements, changements dans la vie quotidienne<br>et lors de mouvements géographiques - Personnes en situation de handicap</p>
+    </header>
+
+    <div class="steps">
+        <div class="step active" data-step="1">
+            <div class="step-number">1</div>
+            <div>Sélection</div>
+        </div>
+        <div class="step" data-step="2">
+            <div class="step-number">2</div>
+            <div>Évaluation</div>
+        </div>
+        <div class="step" data-step="3">
+            <div class="step-number">3</div>
+            <div>Synthèse</div>
+        </div>
+    </div>
+
+    <!-- PHASE 1: Configuration -->
+    <div class="phase active" id="phase1">
+        <div class="import-section">
+            <h3 style="margin-bottom: 1rem;">📥 Importer une évaluation</h3>
+            <div class="file-input-wrapper">
+                <input type="file" id="importCSV" class="file-input" accept=".csv" onchange="importConfiguration()">
+                <label for="importCSV" class="file-input-label">
+                    📄 Charger un fichier CSV
+                </label>
+            </div>
+            <span id="importFileName" style="margin-left: 1rem; color: var(--text-secondary);"></span>
+        </div>
+
+        <div class="config-layout">
+            <div class="items-library">
+                <h2 class="card-title">Domaines d'évaluation</h2>
+                <p class="card-subtitle">Sélectionnez les domaines à évaluer selon les besoins de la personne lors de la transition.</p>
+                
+                <div id="itemsLibrary"></div>
+            </div>
+
+            <div class="selected-items-panel" id="dropZone">
+                <h3 style="margin-bottom: 1rem; color: var(--primary); font-family: 'Bitter', serif;">
+                    <span id="selectedCount">0</span> évaluations sélectionnées
+                </h3>
+                <div id="selectedItems">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎯</div>
+                        <p>Glissez les domaines ici ou cliquez sur le bouton +</p>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="clearSelection()">🗑️ Tout effacer</button>
+                    <button class="btn btn-primary" onclick="goToEvaluation()" id="btnStartEvaluation" disabled>
+                        Démarrer →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PHASE 2: Évaluation -->
+    <div class="phase" id="phase2">
+        <div class="progress-indicator">
+            <div class="progress-text" id="progressText">Question 1 sur X</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div id="questionsContainer"></div>
+
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="backToConfiguration()">← Retour</button>
+            <button class="btn btn-primary" onclick="goToResults()">Voir la synthèse →</button>
+        </div>
+    </div>
+
+    <!-- PHASE 3: Résultats -->
+    <div class="phase" id="phase3">
+        <div class="card">
+            <h2 class="card-title">Synthèse de l'évaluation de transition</h2>
+            <p class="card-subtitle">Analyse des besoins identifiés pour accompagner la transition</p>
+
+            <div class="results-grid" id="resultsGrid"></div>
+
+            <div class="info-box">
+                <strong>📊 Échelle d'évaluation :</strong><br>
+                0 = Besoin non identifié ou situation non explorée<br>
+                1 = Besoin identifié, nécessite attention particulière<br>
+                2 = Besoin partiellement couvert, aménagements requis<br>
+                3 = Besoin bien identifié et pris en compte
+            </div>
+
+            <div id="qualitativeSummary" class="mt-2"></div>
+
+            <div id="detailedResults" class="mt-2"></div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="backToEvaluation()">← Modifier</button>
+                <button class="btn btn-accent" onclick="exportToCSV()">📊 Exporter CSV</button>
+                <button class="btn btn-accent" onclick="exportToPDF()">📄 Imprimer/PDF</button>
+                <button class="btn btn-secondary" onclick="resetAll()">🔄 Nouvelle évaluation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========================================
+    // SÉCURITÉ
+    // ========================================
+    const Security = {
+        escapeHtml: function(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        },
+
+        sanitizeCSVValue: function(value) {
+            if (typeof value !== 'string') return '';
+            const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
+            if (dangerousChars.some(char => value.trim().startsWith(char))) {
+                value = "'" + value;
+            }
+            return value.substring(0, 500);
+        },
+
+        validateScore: function(score) {
+            const parsed = parseInt(score);
+            if (isNaN(parsed) || parsed < 0 || parsed > 3) {
+                return null;
+            }
+            return parsed;
+        },
+
+        validateFileSize: function(file) {
+            const maxSize = 5 * 1024 * 1024;
+            return file.size <= maxSize;
+        },
+
+        showAlert: function(message, type = 'warning') {
+            const alert = document.getElementById('securityAlert');
+            alert.className = 'security-alert show ' + type;
+            alert.innerHTML = '<strong>⚠️ Alerte</strong>' + message;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+    };
+
+    // ========================================
+    // BASE DE DONNÉES - Domaines de transition
+    // ========================================
+    const itemsDatabase = {
+        participation: {
+            name: 'Participation de la personne',
+            icon: '👤',
+            items: [
+                { 
+                    text: "Qu'est-ce qui motive la personne dans cette transition ?",
+                    type: 'text',
+                    placeholder: 'Décrivez les motivations principales...'
+                },
+                { 
+                    text: "Quels sont les besoins de la personne en termes d'autonomie (faire des choix, s'organiser, s'orienter, gérer le temps, se protéger/alerter) ?",
+                    type: 'checkbox',
+                    options: ['Faire des choix', 'S\'organiser', 'S\'orienter dans l\'espace', 'Gérer le temps', 'Se protéger/alerter']
+                },
+                { 
+                    text: "Comment la personne a-t-elle été impliquée dans les choix concernant les étapes de transition ?",
+                    type: 'scale',
+                    scaleLabels: ['Pas du tout impliquée', 'Peu impliquée', 'Moyennement impliquée', 'Très impliquée']
+                },
+                { 
+                    text: "Quelles sont les réussites, stratégies et initiatives développées par la personne ?",
+                    type: 'text',
+                    placeholder: 'Listez les points forts et stratégies...'
+                }
+            ]
+        },
+        communication: {
+            name: 'Communication',
+            icon: '💬',
+            items: [
+                { 
+                    text: "Quelle est la compréhension de la personne sans support ?",
+                    type: 'scale',
+                    scaleLabels: ['Très limitée', 'Partielle', 'Bonne', 'Excellente']
+                },
+                { 
+                    text: "Quels sont les intérêts et habiletés en lecture et écriture ?",
+                    type: 'radio',
+                    options: ['Ne sait ni lire ni écrire', 'Sait lire des mots simples', 'Lit et écrit des phrases simples', 'Lit et écrit couramment']
+                },
+                { 
+                    text: "Quelles sont ses capacités à comprendre avec des supports (visuel, gestuel, images, objets) ?",
+                    type: 'checkbox',
+                    options: ['Supports visuels', 'Gestuelle/Langage des signes', 'Images/Pictogrammes', 'Objets concrets', 'Tablette/Outils numériques']
+                },
+                { 
+                    text: "Quelles sont ses réactions émotionnelles, comportementales dans différents contextes ?",
+                    type: 'text',
+                    placeholder: 'Décrivez les réactions selon les contextes...'
+                },
+                { 
+                    text: "Quelles sont ses capacités à comprendre les mimiques et expressions faciales ?",
+                    type: 'scale',
+                    scaleLabels: ['Ne les perçoit pas', 'Difficilement', 'Partiellement', 'Bien']
+                },
+                { 
+                    text: "Comment réagit-elle aux intonations ?",
+                    type: 'scale',
+                    scaleLabels: ['Insensible', 'Peu sensible', 'Sensible', 'Très sensible']
+                },
+                { 
+                    text: "Quelle est la sensibilité de la personne aux images (vision, compréhension, manipulation) ?",
+                    type: 'checkbox',
+                    options: ['Bonne vision', 'Comprend les images', 'Peut les manipuler', 'Apprécie les images']
+                },
+                { 
+                    text: "La personne est-elle en capacité de pointer ce qu'elle veut ?",
+                    type: 'yesno'
+                },
+                { 
+                    text: "À quels outils de communication le professionnel se réfère-t-il ?",
+                    type: 'text',
+                    placeholder: 'PECS, Makaton, PODD, CAA...'
+                },
+                { 
+                    text: "Existe-t-il une cohérence dans l'utilisation des outils dans les différents milieux ?",
+                    type: 'yesno'
+                }
+            ]
+        },
+        interactions: {
+            name: 'Modes d\'interactions',
+            icon: '🤝',
+            items: [
+                { 
+                    text: "La personne connaît-elle et reconnaît-elle les codes sociaux ?",
+                    type: 'scale',
+                    scaleLabels: ['Pas du tout', 'Partiellement', 'Majoritairement', 'Totalement']
+                },
+                { 
+                    text: "La personne préfère-t-elle être seule ou en groupe ?",
+                    type: 'radio',
+                    options: ['Préfère être seule', 'Indifférent', 'Préfère le groupe', 'Variable selon les contextes']
+                },
+                { 
+                    text: "La personne se sent-elle en sécurité avec les autres ?",
+                    type: 'scale',
+                    scaleLabels: ['Jamais', 'Rarement', 'Souvent', 'Toujours']
+                },
+                { 
+                    text: "Des apprentissages ont-ils permis d'enseigner les codes sociaux ?",
+                    type: 'radio',
+                    options: ['Non', 'Oui, en cours', 'Oui, terminés', 'Non applicable']
+                },
+                { 
+                    text: "Comment la personne interagit-elle avec son environnement social ?",
+                    type: 'text',
+                    placeholder: 'Décrivez les types d\'interactions...'
+                },
+                { 
+                    text: "La personne refuse-t-elle un contact avec certaines personnes ?",
+                    type: 'radio',
+                    options: ['Non', 'Parfois', 'Souvent', 'Systématiquement']
+                },
+                { 
+                    text: "Y a-t-il une vigilance particulière lors d'interactions ?",
+                    type: 'text',
+                    placeholder: 'Précisez les vigilances nécessaires ou indiquez "Aucune"...'
+                }
+            ]
+        },
+        emotions: {
+            name: 'Gestion des émotions',
+            icon: '😊',
+            items: [
+                { 
+                    text: "La personne arrive-t-elle à exprimer, moduler, gérer ses émotions ?",
+                    type: 'scale',
+                    scaleLabels: ['Très difficilement', 'Difficilement', 'Assez bien', 'Très bien']
+                },
+                { 
+                    text: "Comprend-elle les émotions d'autrui ?",
+                    type: 'scale',
+                    scaleLabels: ['Pas du tout', 'Partiellement', 'Assez bien', 'Très bien']
+                },
+                { 
+                    text: "Quels sont ses besoins en accompagnement (supports d'expression des émotions) ?",
+                    type: 'checkbox',
+                    options: ['Roue des émotions', 'Pictogrammes émotionnels', 'Jeux de rôle', 'Médiation corporelle', 'Espace de retrait']
+                },
+                { 
+                    text: "Quel moyen d'autorégulation permet à la personne de contrôler son comportement ?",
+                    type: 'text',
+                    placeholder: 'Respiration, isolement, objet transitionnel...'
+                },
+                { 
+                    text: "Comment la personne gère-t-elle les situations d'attente ?",
+                    type: 'radio',
+                    options: ['Très mal (agitation, angoisse)', 'Difficilement', 'Moyennement', 'Bien avec supports', 'Très bien']
+                }
+            ]
+        },
+        sensoriel: {
+            name: 'Traitement des informations sensorielles',
+            icon: '👂',
+            items: [
+                { 
+                    text: "La personne fait-elle la différence entre informations importantes et moins utiles ?",
+                    type: 'scale',
+                    scaleLabels: ['Jamais', 'Rarement', 'Souvent', 'Toujours']
+                },
+                { 
+                    text: "Quelles sont les répercussions sur son comportement et état émotionnel ?",
+                    type: 'text',
+                    placeholder: 'Décrivez les répercussions observées...'
+                },
+                { 
+                    text: "Comment réagit-elle aux stimuli tactiles (toucher humain, textures) ?",
+                    type: 'checkbox',
+                    options: ['Hypersensibilité au toucher', 'Hyposensibilité', 'Recherche de textures', 'Évitement de certaines textures', 'Pas de particularité']
+                },
+                { 
+                    text: "Comment réagit-elle aux stimuli gustatifs et olfactifs ?",
+                    type: 'checkbox',
+                    options: ['Hypersensibilité aux odeurs', 'Hypersensibilité au goût', 'Sélectivité alimentaire', 'Recherche d\'odeurs', 'Pas de particularité']
+                }
+            ]
+        },
+        routines: {
+            name: 'Routines et perturbations',
+            icon: '📅',
+            items: [
+                { 
+                    text: "Quelles émotions face aux changements (anxiété, détachement, panique, colère) ?",
+                    type: 'checkbox',
+                    options: ['Anxiété', 'Détachement', 'Panique', 'Colère', 'Agitation', 'Repli sur soi']
+                },
+                { 
+                    text: "Comment vit-elle l'absence d'un professionnel ou d'un pair ?",
+                    type: 'scale',
+                    scaleLabels: ['Très mal', 'Difficilement', 'Moyennement', 'Bien']
+                },
+                { 
+                    text: "Comment vit-elle l'arrivée d'un nouveau professionnel ou pair ?",
+                    type: 'scale',
+                    scaleLabels: ['Très mal', 'Difficilement', 'Moyennement', 'Bien']
+                },
+                { 
+                    text: "Quelle est la stabilité de l'accompagnement malgré les absences ?",
+                    type: 'scale',
+                    scaleLabels: ['Très instable', 'Instable', 'Stable', 'Très stable']
+                },
+                { 
+                    text: "Comment vit-elle les changements d'organisation ou d'emploi du temps ?",
+                    type: 'radio',
+                    options: ['Avec grande difficulté', 'Avec difficulté', 'S\'adapte progressivement', 'S\'adapte facilement']
+                },
+                { 
+                    text: "Comment vit-elle les changements dans l'environnement matériel ?",
+                    type: 'scale',
+                    scaleLabels: ['Très mal', 'Difficilement', 'Moyennement', 'Bien']
+                },
+                { 
+                    text: "Comment vit-elle les événements organisés (portes ouvertes, repas) ?",
+                    type: 'radio',
+                    options: ['Évite', 'Participe avec appréhension', 'Participe volontiers', 'Apprécie beaucoup']
+                },
+                { 
+                    text: "Comment vit-elle les retours de week-end et vacances ?",
+                    type: 'text',
+                    placeholder: 'Décrivez les réactions au retour...'
+                },
+                { 
+                    text: "Comment vit-elle le passage d'activité individuelle à collective ?",
+                    type: 'scale',
+                    scaleLabels: ['Très mal', 'Difficilement', 'Moyennement', 'Bien']
+                }
+            ]
+        },
+        social: {
+            name: 'Environnement social',
+            icon: '👨‍👩‍👧‍👦',
+            items: [
+                { 
+                    text: "Avec qui souhaite-t-elle maintenir des contacts réguliers ?",
+                    type: 'text',
+                    placeholder: 'Listez les personnes importantes...'
+                },
+                { 
+                    text: "Reçoit-elle des visites, appels, courrier ?",
+                    type: 'checkbox',
+                    options: ['Visites', 'Appels téléphoniques', 'Courrier/Email', 'Réseaux sociaux', 'Aucun']
+                },
+                { 
+                    text: "À quelle fréquence rencontre-t-elle sa famille ?",
+                    type: 'radio',
+                    options: ['Jamais', 'Moins d\'1 fois/mois', '1 fois/mois', 'Plusieurs fois/mois', 'Chaque semaine']
+                },
+                { 
+                    text: "Souhaite-t-elle impliquer des proches dans son projet ?",
+                    type: 'radio',
+                    options: ['Non', 'Ne sait pas', 'Oui, certains proches', 'Oui, fortement']
+                },
+                { 
+                    text: "Quelle coordination avec les proches pour les interventions ?",
+                    type: 'scale',
+                    scaleLabels: ['Inexistante', 'Faible', 'Bonne', 'Excellente']
+                },
+                { 
+                    text: "Comment vit-elle les évolutions de son entourage (vieillissement, maladies, décès) ?",
+                    type: 'text',
+                    placeholder: 'Décrivez les réactions et le vécu...'
+                },
+                { 
+                    text: "A-t-elle l'habitude de participer aux événements et fêtes ?",
+                    type: 'radio',
+                    options: ['Jamais', 'Rarement', 'Parfois', 'Souvent', 'Toujours']
+                },
+                { 
+                    text: "La situation familiale a-t-elle évolué récemment ?",
+                    type: 'radio',
+                    options: ['Non', 'Oui, légers changements', 'Oui, changements importants']
+                },
+                { 
+                    text: "A-t-elle besoin d'aide pour entrer en relation ?",
+                    type: 'scale',
+                    scaleLabels: ['Non, autonome', 'Parfois', 'Souvent', 'Toujours']
+                },
+                { 
+                    text: "Éprouve-t-elle le besoin de créer de nouveaux liens ?",
+                    type: 'radio',
+                    options: ['Non', 'Ne sait pas exprimer', 'Oui, exprimé', 'Oui, très motivée']
+                },
+                { 
+                    text: "Quels sont ses besoins liés à la parentalité ?",
+                    type: 'text',
+                    placeholder: 'Décrivez les besoins s\'il y a lieu ou indiquez "Non applicable"...'
+                }
+            ]
+        },
+        affectivite: {
+            name: 'Vie affective et sexuelle',
+            icon: '❤️',
+            items: [
+                { 
+                    text: "Quels sont les besoins d'intimité de la personne ?",
+                    type: 'checkbox',
+                    options: ['Espace personnel', 'Moments de solitude', 'Relations privilégiées', 'Intimité physique', 'Non identifiés']
+                },
+                { 
+                    text: "A-t-elle des besoins particuliers dans l'expression de sa sexualité ?",
+                    type: 'radio',
+                    options: ['Non', 'Oui, mais non exprimés', 'Oui, exprimés', 'Accompagnement en cours', 'Non applicable']
+                },
+                { 
+                    text: "A-t-elle une vie affective ? Si non, est-ce par choix ?",
+                    type: 'radio',
+                    options: ['Oui, a une vie affective', 'Non, par choix', 'Non, se sent empêchée', 'Non, mais souhaite', 'Question non explorée']
+                }
+            ]
+        },
+        evenements: {
+            name: 'Événements symboliques',
+            icon: '🎉',
+            items: [
+                { 
+                    text: "Lors d'événements, reçoit-elle des visites, appels, courrier ?",
+                    type: 'checkbox',
+                    options: ['Visites', 'Appels', 'Cartes/Courrier', 'Cadeaux', 'Aucun contact']
+                },
+                { 
+                    text: "Comment les événements familiaux sont-ils pris en compte ?",
+                    type: 'scale',
+                    scaleLabels: ['Pas du tout', 'Peu', 'Assez bien', 'Très bien']
+                },
+                { 
+                    text: "Comment réagit-elle aux dates anniversaires ?",
+                    type: 'radio',
+                    options: ['Indifférente', 'Contente', 'Très heureuse', 'Anxieuse', 'Variable']
+                },
+                { 
+                    text: "Comment réagit-elle aux dates d'événements traumatiques ?",
+                    type: 'radio',
+                    options: ['Pas d\'événement traumatique', 'Très affectée', 'Moyennement affectée', 'Ne semble pas affectée', 'Ne peut identifier']
+                },
+                { 
+                    text: "Comment réagit-elle à l'approche des fêtes ou changements de saison ?",
+                    type: 'checkbox',
+                    options: ['Anticipation positive', 'Anxiété', 'Troubles du sommeil', 'Changements d\'humeur', 'Pas d\'impact notable']
+                },
+                { 
+                    text: "A-t-elle vécu récemment un événement traumatique ?",
+                    type: 'radio',
+                    options: ['Non', 'Oui, événement mineur', 'Oui, événement majeur', 'Préfère ne pas répondre']
+                }
+            ]
+        },
+        sante: {
+            name: 'État de santé',
+            icon: '🏥',
+            items: [
+                { 
+                    text: "Comment se sent-elle (mal-être, fatigue) ?",
+                    type: 'scale',
+                    scaleLabels: ['Très mal', 'Mal', 'Correct', 'Bien']
+                },
+                { 
+                    text: "Quel est son état de santé (allergies, maux de tête, douleurs, règles) ?",
+                    type: 'text',
+                    placeholder: 'Décrivez l\'état de santé actuel...'
+                },
+                { 
+                    text: "Son état de santé a-t-il évolué récemment ?",
+                    type: 'radio',
+                    options: ['Non', 'Oui, amélioration', 'Oui, dégradation', 'Oui, changements variables']
+                },
+                { 
+                    text: "A-t-elle des problématiques d'addiction ?",
+                    type: 'radio',
+                    options: ['Non', 'Tabac', 'Alcool', 'Autres substances', 'Addictions comportementales', 'Plusieurs addictions']
+                },
+                { 
+                    text: "A-t-elle des besoins particuliers liés à son handicap ou pathologie ?",
+                    type: 'text',
+                    placeholder: 'Listez les besoins spécifiques...'
+                },
+                { 
+                    text: "A-t-elle des douleurs qui altèrent son quotidien ?",
+                    type: 'radio',
+                    options: ['Pas de douleur', 'Douleurs occasionnelles', 'Douleurs régulières', 'Douleurs permanentes']
+                },
+                { 
+                    text: "Quel traitement prend-elle ? Effets secondaires ? Changements récents ?",
+                    type: 'text',
+                    placeholder: 'Listez les traitements et observations...'
+                },
+                { 
+                    text: "A-t-elle reçu une explication sur l'accès à son dossier médical ?",
+                    type: 'radio',
+                    options: ['Non', 'Oui, partiellement', 'Oui, complètement', 'Non applicable']
+                },
+                { 
+                    text: "A-t-elle déclaré un médecin traitant, choisi ses spécialistes ?",
+                    type: 'checkbox',
+                    options: ['Médecin traitant déclaré', 'Spécialistes choisis', 'En cours', 'Non fait']
+                },
+                { 
+                    text: "A-t-elle désigné une personne de confiance ?",
+                    type: 'radio',
+                    options: ['Oui', 'Non, mais envisagé', 'Non', 'Ne comprend pas le concept']
+                },
+                { 
+                    text: "A-t-elle reçu information sur les directives anticipées ?",
+                    type: 'radio',
+                    options: ['Oui, et rédigées', 'Oui, en réflexion', 'Non', 'Non applicable']
+                },
+                { 
+                    text: "A-t-elle déjà été hospitalisée ? Besoins en cas d'hospitalisation ?",
+                    type: 'text',
+                    placeholder: 'Historique et besoins spécifiques...'
+                },
+                { 
+                    text: "A-t-elle bénéficié de consultations spécialisées ?",
+                    type: 'checkbox',
+                    options: ['Psychiatre', 'Neurologue', 'Psychologue', 'Autres spécialistes', 'Aucune']
+                }
+            ]
+        },
+        soins: {
+            name: 'Soins et consultations',
+            icon: '⚕️',
+            items: [
+                { 
+                    text: "Comment sont préparées les consultations et rendez-vous médicaux ?",
+                    type: 'checkbox',
+                    options: ['Annonce verbale', 'Supports visuels', 'Mise en situation', 'Visite préalable des lieux', 'Aucune préparation']
+                },
+                { 
+                    text: "Souhaite-t-elle être accompagnée ? Choisit-elle l'accompagnant ?",
+                    type: 'radio',
+                    options: ['Refuse l\'accompagnement', 'Accepte sans choisir', 'Choisit son accompagnant', 'Varie selon les situations']
+                },
+                { 
+                    text: "Quelle est sa réaction lors des soins ?",
+                    type: 'checkbox',
+                    options: ['Coopérative', 'Anxieuse', 'Refus', 'Besoin de contention', 'Calme']
+                },
+                { 
+                    text: "A-t-elle peur ? De qui, de quoi, où, quand ?",
+                    type: 'text',
+                    placeholder: 'Décrivez les peurs identifiées ou indiquez "Aucune peur identifiée"...'
+                },
+                { 
+                    text: "Comprend-elle le déroulement et l'objectif de la consultation ?",
+                    type: 'scale',
+                    scaleLabels: ['Pas du tout', 'Peu', 'Assez bien', 'Très bien']
+                },
+                { 
+                    text: "Sait-elle exprimer sa douleur et la localiser ?",
+                    type: 'radio',
+                    options: ['Ne peut pas exprimer', 'Exprime sans localiser', 'Localise approximativement', 'Localise précisément']
+                },
+                { 
+                    text: "Quelles stratégies pour la rassurer et favoriser sa compréhension ?",
+                    type: 'checkbox',
+                    options: ['Explications verbales', 'Supports visuels', 'Objet rassurant', 'Présence familière', 'Environnement adapté', 'Autres']
+                }
+            ]
+        },
+        habitudes: {
+            name: 'Habitudes de vie',
+            icon: '🏃',
+            items: [
+                { 
+                    text: "Pratique-t-elle une activité physique ou est-elle sédentaire ?",
+                    type: 'radio',
+                    options: ['Très sédentaire', 'Peu active', 'Modérément active', 'Très active']
+                },
+                { 
+                    text: "A-t-elle besoin d'aide technique ?",
+                    type: 'checkbox',
+                    options: ['Fauteuil roulant', 'Déambulateur', 'Cannes', 'Matériel de transfert', 'Aménagements domicile', 'Aucun']
+                },
+                { 
+                    text: "Qualité de l'installation des aides techniques ?",
+                    type: 'radio',
+                    options: ['Non applicable', 'À améliorer', 'Satisfaisante', 'Très bonne']
+                },
+                { 
+                    text: "Comment s'effectuent les manutentions ?",
+                    type: 'checkbox',
+                    options: ['Autonome', 'Avec aide partielle', 'Avec aide totale', 'Matériel spécifique', 'Non applicable']
+                },
+                { 
+                    text: "Quels aspects privilégiés dans sa vie quotidienne ?",
+                    type: 'checkbox',
+                    options: ['Repas', 'Hygiène', 'Interactions sociales', 'Activités', 'Repos', 'Autonomie']
+                },
+                { 
+                    text: "A-t-elle des phobies ?",
+                    type: 'radio',
+                    options: ['Non', 'Oui, mineures', 'Oui, impactantes', 'Oui, majeures']
+                }
+            ]
+        },
+        sommeil: {
+            name: 'Sommeil',
+            icon: '😴',
+            items: [
+                { 
+                    text: "Combien de temps dort-elle par nuit (heure de coucher/lever) ?",
+                    type: 'text',
+                    placeholder: 'Ex: 22h-7h (9h de sommeil)'
+                },
+                { 
+                    text: "Le bruit la dérange-t-il ?",
+                    type: 'scale',
+                    scaleLabels: ['Pas du tout', 'Un peu', 'Beaucoup', 'Énormément']
+                },
+                { 
+                    text: "A-t-elle des difficultés pour s'endormir ?",
+                    type: 'radio',
+                    options: ['Jamais', 'Rarement (1-2x/semaine)', 'Souvent (3-5x/semaine)', 'Toujours']
+                },
+                { 
+                    text: "A-t-elle des réveils nocturnes ?",
+                    type: 'radio',
+                    options: ['Non', 'Rarement', 'Plusieurs fois/semaine', 'Chaque nuit']
+                },
+                { 
+                    text: "A-t-elle des rituels d'endormissement ?",
+                    type: 'checkbox',
+                    options: ['Lecture', 'Musique', 'Objet transitionnel', 'Présence rassurante', 'Routine spécifique', 'Aucun']
+                },
+                { 
+                    text: "Son sommeil est-il perturbé par des interventions ?",
+                    type: 'radio',
+                    options: ['Non', 'Rarement', 'Parfois', 'Souvent']
+                },
+                { 
+                    text: "Prend-elle un traitement pour dormir ?",
+                    type: 'radio',
+                    options: ['Non', 'Occasionnellement', 'Régulièrement', 'Quotidiennement']
+                },
+                { 
+                    text: "Dort-elle de la même façon chez elle ou ailleurs ?",
+                    type: 'radio',
+                    options: ['Identique', 'Légèrement différent', 'Très différent', 'Ne dort pas ailleurs']
+                },
+                { 
+                    text: "Se sent-elle en sécurité chez elle, dans sa chambre ?",
+                    type: 'scale',
+                    scaleLabels: ['Pas du tout', 'Peu', 'Assez', 'Totalement']
+                }
+            ]
+        },
+        hygiene: {
+            name: 'Hygiène corporelle',
+            icon: '🚿',
+            items: [
+                { 
+                    text: "Quelles sont ses habitudes pour la toilette ?",
+                    type: 'text',
+                    placeholder: 'Matin/soir, bain/douche, durée...'
+                },
+                { 
+                    text: "A-t-elle besoin d'aide pour sa toilette ?",
+                    type: 'radio',
+                    options: ['Totalement autonome', 'Aide partielle', 'Aide importante', 'Aide totale']
+                },
+                { 
+                    text: "Quel est son niveau d'autonomie pour l'hygiène ?",
+                    type: 'scale',
+                    scaleLabels: ['Dépendant', 'Peu autonome', 'Assez autonome', 'Autonome']
+                }
+            ]
+        },
+        alimentation: {
+            name: 'Hygiène alimentaire',
+            icon: '🍽️',
+            items: [
+                { 
+                    text: "Combien de repas par jour ?",
+                    type: 'radio',
+                    options: ['1-2 repas', '3 repas', '3 repas + collations', 'Plus de 5 prises', 'Irrégulier']
+                },
+                { 
+                    text: "Aliments préférés et ceux consommés peu ou pas ?",
+                    type: 'text',
+                    placeholder: 'Listez préférences et aversions...'
+                },
+                { 
+                    text: "A-t-elle un régime alimentaire ou particularités ?",
+                    type: 'checkbox',
+                    options: ['Régime médical', 'Allergies', 'Texture modifiée', 'Sélectivité', 'Pas de particularité']
+                },
+                { 
+                    text: "Mange-t-elle rapidement ?",
+                    type: 'radio',
+                    options: ['Très lentement', 'Lentement', 'Normalement', 'Rapidement', 'Très rapidement']
+                },
+                { 
+                    text: "A-t-elle besoin d'aide (déglutition, découpe, stimulation) ?",
+                    type: 'checkbox',
+                    options: ['Aide à la déglutition', 'Découpe des aliments', 'Stimulation pour manger', 'Installation', 'Autonome']
+                },
+                { 
+                    text: "Boit-elle suffisamment ?",
+                    type: 'radio',
+                    options: ['Insuffisant (<1L)', 'Juste suffisant', 'Bien (1-2L)', 'Beaucoup (>2L)']
+                },
+                { 
+                    text: "Ressent-elle la faim, la satiété, la soif ?",
+                    type: 'checkbox',
+                    options: ['Ressent la faim', 'Ressent la satiété', 'Ressent la soif', 'Ne ressent aucun signal']
+                }
+            ]
+        },
+        loisirs: {
+            name: 'Activités et loisirs',
+            icon: '🎨',
+            items: [
+                { 
+                    text: "Quels sont les activités et loisirs pratiqués ?",
+                    type: 'checkbox',
+                    options: ['Activités artistiques', 'Sorties culturelles', 'Activités manuelles', 'Jeux', 'Musique', 'Lecture/TV', 'Autres']
+                },
+                { 
+                    text: "Quel bénéfice/intérêt tire-t-elle de cette activité ?",
+                    type: 'checkbox',
+                    options: ['Plaisir', 'Socialisation', 'Détente', 'Expression', 'Apprentissage', 'Routine']
+                },
+                { 
+                    text: "Qu'est-ce qui la met à l'aise dans l'activité ?",
+                    type: 'text',
+                    placeholder: 'Facteurs positifs...'
+                },
+                { 
+                    text: "Y a-t-il des interactions avec des pairs ?",
+                    type: 'radio',
+                    options: ['Jamais', 'Rarement', 'Parfois', 'Souvent', 'Toujours']
+                },
+                { 
+                    text: "Quel est son degré d'autonomie dans l'activité ?",
+                    type: 'scale',
+                    scaleLabels: ['Dépendant', 'Peu autonome', 'Assez autonome', 'Autonome']
+                },
+                { 
+                    text: "Cette activité représente-t-elle toujours un intérêt ?",
+                    type: 'scale',
+                    scaleLabels: ['Plus du tout', 'Un peu', 'Assez', 'Beaucoup']
+                },
+                { 
+                    text: "Part-elle en vacances ?",
+                    type: 'radio',
+                    options: ['Ne part pas', 'En famille', 'En groupe accompagné', 'En séjour adapté', 'En autonomie']
+                }
+            ]
+        },
+        sport: {
+            name: 'Activités physiques et sportives',
+            icon: '⚽',
+            items: [
+                { 
+                    text: "Marche-t-elle au cours de la journée ? Combien de temps ?",
+                    type: 'radio',
+                    options: ['Ne marche pas', 'Moins de 15 min', '15-30 min', 'Plus de 30 min']
+                },
+                { 
+                    text: "Pratique-t-elle une activité physique ou sportive ?",
+                    type: 'yesno'
+                },
+                { 
+                    text: "L'activité lui sert-elle d'exutoire, de loisir, de relaxation ?",
+                    type: 'checkbox',
+                    options: ['Exutoire', 'Loisir', 'Relaxation', 'Socialisation']
+                },
+                { 
+                    text: "L'activité est-elle adaptée à ses besoins et possibilités ?",
+                    type: 'scale',
+                    scaleLabels: ['Pas du tout', 'Partiellement', 'Bien adaptée', 'Parfaitement']
+                }
+            ]
+        },
+        environnement_physique: {
+            name: 'Environnement physique',
+            icon: '🏠',
+            items: [
+                { 
+                    text: "Comment comprend-elle son environnement ?",
+                    type: 'scale',
+                    scaleLabels: ['Très difficilement', 'Difficilement', 'Assez bien', 'Très bien']
+                },
+                { 
+                    text: "Comment comprend-elle les modifications de l'espace ?",
+                    type: 'scale',
+                    scaleLabels: ['Très mal', 'Difficilement', 'Progressivement', 'Facilement']
+                },
+                { 
+                    text: "Quels espaces sont vécus comme agréables ?",
+                    type: 'checkbox',
+                    options: ['Chambre', 'Espaces communs', 'Extérieur/Jardin', 'Salle d\'activités', 'Salle à manger', 'Autres']
+                },
+                { 
+                    text: "Quels espaces sont vécus comme contraignants ?",
+                    type: 'text',
+                    placeholder: 'Listez les espaces difficiles...'
+                },
+                { 
+                    text: "Les espaces d'intimité et de retrait sont-ils bien identifiés ?",
+                    type: 'radio',
+                    options: ['Non', 'Partiellement', 'Oui, clairement']
+                },
+                { 
+                    text: "À quelle fréquence se rend-elle dans ces espaces de retrait ?",
+                    type: 'radio',
+                    options: ['Jamais', 'Rarement', 'Régulièrement', 'Très souvent', 'Non applicable']
+                },
+                { 
+                    text: "La tranquillité est-elle respectée par pairs et professionnels ?",
+                    type: 'scale',
+                    scaleLabels: ['Jamais', 'Rarement', 'Souvent', 'Toujours']
+                },
+                { 
+                    text: "Qui est autorisé à pénétrer dans son espace personnel ?",
+                    type: 'checkbox',
+                    options: ['Professionnels avec autorisation', 'Famille', 'Amis', 'Personne', 'Tout le monde']
+                },
+                { 
+                    text: "A-t-elle accès librement à son espace personnel ?",
+                    type: 'radio',
+                    options: ['Oui, totalement', 'Oui, avec accompagnement', 'Partiellement', 'Non']
+                },
+                { 
+                    text: "Est-elle impactée par un environnement trop chargé ou vide ?",
+                    type: 'checkbox',
+                    options: ['Sensible au trop-plein', 'Sensible au vide', 'Pas d\'impact notable']
+                },
+                { 
+                    text: "A-t-elle besoin d'un espace contenant et stable ?",
+                    type: 'scale',
+                    scaleLabels: ['Non', 'Un peu', 'Beaucoup', 'Absolument']
+                },
+                { 
+                    text: "Quelle est sa sensibilité au bruit ?",
+                    type: 'radio',
+                    options: ['Hyposensible', 'Normale', 'Hypersensible', 'Variable selon contexte']
+                },
+                { 
+                    text: "Est-elle distraite par un bruit de fond ?",
+                    type: 'scale',
+                    scaleLabels: ['Jamais', 'Rarement', 'Souvent', 'Toujours']
+                },
+                { 
+                    text: "Comment réagit-elle à différents types de lumière ?",
+                    type: 'checkbox',
+                    options: ['Préfère lumière naturelle', 'Préfère lumière tamisée', 'Évite lumière vive', 'Indifférent', 'Recherche lumière forte']
+                },
+                { 
+                    text: "Quelle est sa sensibilité visuelle ?",
+                    type: 'radio',
+                    options: ['Hyposensible', 'Normale', 'Hypersensible', 'Variable']
+                },
+                { 
+                    text: "Comment réagit-elle aux distractions visuelles ?",
+                    type: 'radio',
+                    options: ['Indifférent', 'Peu distrait', 'Facilement distrait', 'Très distrait']
+                },
+                { 
+                    text: "De quels supports a-t-elle besoin pour structurer les espaces ?",
+                    type: 'checkbox',
+                    options: ['Pictogrammes', 'Codes couleurs', 'Balisage au sol', 'Panneaux', 'Aucun']
+                },
+                { 
+                    text: "Se repère-t-elle avec pictogrammes, codes couleurs ?",
+                    type: 'radio',
+                    options: ['Non', 'Partiellement', 'Oui, bien', 'Non testé']
+                },
+                { 
+                    text: "Comment réagit-elle aux situations de groupe ?",
+                    type: 'radio',
+                    options: ['Évite', 'Tolère difficilement', 'Apprécie modérément', 'Apprécie beaucoup']
+                },
+                { 
+                    text: "Les espaces dédiés à des fonctions spécifiques sont-ils identifiés ?",
+                    type: 'radio',
+                    options: ['Non', 'Partiellement', 'Oui, clairement']
+                }
+            ]
+        },
+        mobilite: {
+            name: 'Accessibilité et mobilité',
+            icon: '♿',
+            items: [
+                { 
+                    text: "Comment se déplace-t-elle dans son milieu de vie ?",
+                    type: 'checkbox',
+                    options: ['Marche autonome', 'Marche avec aide humaine', 'Fauteuil manuel', 'Fauteuil électrique', 'Déambulateur', 'Cannes']
+                },
+                { 
+                    text: "Comment se déplace-t-elle à l'extérieur ?",
+                    type: 'checkbox',
+                    options: ['Marche', 'Transport adapté', 'Transports en commun', 'Véhicule personnel', 'Accompagnement nécessaire']
+                },
+                { 
+                    text: "A-t-elle connaissance de son quartier ?",
+                    type: 'scale',
+                    scaleLabels: ['Pas du tout', 'Un peu', 'Assez bien', 'Très bien']
+                },
+                { 
+                    text: "Rencontre-t-elle des difficultés dans ses déplacements ?",
+                    type: 'checkbox',
+                    options: ['Obstacles physiques', 'Fatigue', 'Repérage spatial', 'Anxiété', 'Aucune difficulté']
+                },
+                { 
+                    text: "Reçoit-elle une aide en cas de difficulté ?",
+                    type: 'radio',
+                    options: ['Jamais', 'Rarement', 'Parfois', 'Systématiquement']
+                }
+            ]
+        }
+    };
+
+    let selectedItems = [];
+    let responses = {};
+
+    // ========================================
+    // INITIALISATION
+    // ========================================
+    document.addEventListener('DOMContentLoaded', function() {
+        renderItemsLibrary();
+        setupDragAndDrop();
+        updateItemsHighlight();
+    });
+
+    // ========================================
+    // RENDU DE L'INTERFACE
+    // ========================================
+    function renderItemsLibrary() {
+        const container = document.getElementById('itemsLibrary');
+        const fragment = document.createDocumentFragment();
+
+        Object.keys(itemsDatabase).forEach(domainId => {
+            const domain = itemsDatabase[domainId];
+            const section = document.createElement('div');
+            section.className = 'domain-section';
+
+            const header = document.createElement('div');
+            header.className = 'domain-header';
+            header.onclick = () => toggleDomain(domainId);
+            header.innerHTML = `
+                <span class="domain-icon">${domain.icon}</span>
+                <span class="domain-name">${Security.escapeHtml(domain.name)}</span>
+                <span class="domain-count">${domain.items.length} items</span>
+            `;
+
+            const grid = document.createElement('div');
+            grid.className = 'items-grid';
+            grid.id = `items-${domainId}`;
+            grid.style.display = 'none';
+
+            domain.items.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item';
+                itemDiv.draggable = true;
+                itemDiv.dataset.domain = domainId;
+                itemDiv.dataset.index = index;
+
+                const itemHeader = document.createElement('div');
+                itemHeader.className = 'item-header';
+
+                const grip = document.createElement('span');
+                grip.className = 'item-grip';
+                grip.textContent = '⋮⋮';
+
+                const text = document.createElement('span');
+                text.className = 'item-text';
+                text.textContent = item.text;
+
+                const btn = document.createElement('button');
+                btn.className = 'item-add-btn';
+                btn.textContent = '+';
+                btn.onclick = () => addItemToSelection(domainId, index);
+
+                itemHeader.appendChild(grip);
+                itemHeader.appendChild(text);
+                itemHeader.appendChild(btn);
+
+                itemDiv.appendChild(itemHeader);
+                grid.appendChild(itemDiv);
+            });
+
+            section.appendChild(header);
+            section.appendChild(grid);
+            fragment.appendChild(section);
+        });
+
+        container.appendChild(fragment);
+    }
+
+    function toggleDomain(domainId) {
+        const grid = document.getElementById(`items-${domainId}`);
+        grid.style.display = grid.style.display === 'none' ? 'grid' : 'none';
+    }
+
+    // ========================================
+    // DRAG & DROP
+    // ========================================
+    function setupDragAndDrop() {
+        const dropZone = document.getElementById('dropZone');
+
+        document.addEventListener('dragstart', function(e) {
+            if (e.target.classList.contains('item')) {
+                e.target.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'copy';
+                e.dataTransfer.setData('domain', e.target.dataset.domain);
+                e.dataTransfer.setData('index', e.target.dataset.index);
+            }
+        });
+
+        document.addEventListener('dragend', function(e) {
+            if (e.target.classList.contains('item')) {
+                e.target.classList.remove('dragging');
+            }
+        });
+
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', function(e) {
+            if (e.target === dropZone) {
+                dropZone.classList.remove('drag-over');
+            }
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const domain = e.dataTransfer.getData('domain');
+            const index = parseInt(e.dataTransfer.getData('index'));
+            addItemToSelection(domain, index);
+        });
+    }
+
+    // ========================================
+    // GESTION DES ITEMS
+    // ========================================
+    function addItemToSelection(domainId, index) {
+        const itemData = itemsDatabase[domainId].items[index];
+        const item = {
+            domain: domainId,
+            domainName: itemsDatabase[domainId].name,
+            text: itemData.text,
+            type: itemData.type || 'scale',
+            options: itemData.options,
+            scaleLabels: itemData.scaleLabels,
+            placeholder: itemData.placeholder,
+            id: `${domainId}_${index}`
+        };
+
+        if (selectedItems.find(i => i.id === item.id)) {
+            return;
+        }
+
+        selectedItems.push(item);
+        renderSelectedItems();
+        updateSelectedCount();
+        updateItemsHighlight();
+    }
+
+    function renderSelectedItems() {
+        const container = document.getElementById('selectedItems');
+
+        if (selectedItems.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎯</div>
+                    <p>Glissez les domaines ici ou cliquez sur le bouton +</p>
+                </div>
+            `;
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        selectedItems.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'selected-item';
+
+            const header = document.createElement('div');
+            header.className = 'selected-item-header';
+
+            const domain = document.createElement('span');
+            domain.className = 'selected-item-domain';
+            domain.textContent = item.domainName;
+
+            const text = document.createElement('span');
+            text.className = 'selected-item-text';
+            text.textContent = item.text;
+
+            const btn = document.createElement('button');
+            btn.className = 'selected-item-remove';
+            btn.textContent = '×';
+            btn.onclick = () => removeItem(item.id);
+
+            header.appendChild(domain);
+            header.appendChild(text);
+            header.appendChild(btn);
+
+            div.appendChild(header);
+            fragment.appendChild(div);
+        });
+
+        container.innerHTML = '';
+        container.appendChild(fragment);
+    }
+
+    function removeItem(itemId) {
+        selectedItems = selectedItems.filter(i => i.id !== itemId);
+        renderSelectedItems();
+        updateSelectedCount();
+        updateItemsHighlight();
+    }
+
+    function updateSelectedCount() {
+        document.getElementById('selectedCount').textContent = selectedItems.length;
+        document.getElementById('btnStartEvaluation').disabled = selectedItems.length === 0;
+    }
+
+    function clearSelection() {
+        if (confirm('Voulez-vous vraiment effacer toutes les sélections ?')) {
+            selectedItems = [];
+            renderSelectedItems();
+            updateSelectedCount();
+            updateItemsHighlight();
+        }
+    }
+
+    function updateItemsHighlight() {
+        // Retirer toutes les classes 'selected'
+        document.querySelectorAll('.item').forEach(item => {
+            item.classList.remove('selected');
+        });
+
+        // Ajouter la classe 'selected' aux items sélectionnés
+        selectedItems.forEach(selectedItem => {
+            const itemElement = document.querySelector(`[data-domain="${selectedItem.domain}"][data-index="${selectedItem.id.split('_')[1]}"]`);
+            if (itemElement) {
+                itemElement.classList.add('selected');
+            }
+        });
+    }
+
+    // ========================================
+    // PHASE ÉVALUATION
+    // ========================================
+    function goToEvaluation() {
+        if (selectedItems.length === 0) return;
+        renderQuestions();
+        switchPhase(2);
+        updateProgress();
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById('questionsContainer');
+        const fragment = document.createDocumentFragment();
+
+        selectedItems.forEach((item, index) => {
+            const block = document.createElement('div');
+            block.className = 'question-block';
+
+            const header = document.createElement('div');
+            header.className = 'question-header';
+
+            const number = document.createElement('div');
+            number.className = 'question-number';
+            number.textContent = index + 1;
+
+            const content = document.createElement('div');
+            content.className = 'question-content';
+
+            const tag = document.createElement('span');
+            tag.className = 'question-domain-tag';
+            tag.textContent = item.domainName;
+
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = item.text;
+
+            content.appendChild(tag);
+            content.appendChild(questionText);
+
+            header.appendChild(number);
+            header.appendChild(content);
+
+            block.appendChild(header);
+
+            // Créer le champ de réponse selon le type
+            const responseContainer = document.createElement('div');
+            responseContainer.className = 'response-container';
+            responseContainer.style.marginTop = '1.5rem';
+
+            switch(item.type) {
+                case 'text':
+                    const textarea = document.createElement('textarea');
+                    textarea.className = 'text-response';
+                    textarea.style.width = '100%';
+                    textarea.style.minHeight = '100px';
+                    textarea.style.padding = '1rem';
+                    textarea.style.borderRadius = '8px';
+                    textarea.style.border = '2px solid var(--border)';
+                    textarea.style.fontFamily = 'inherit';
+                    textarea.style.fontSize = '0.95rem';
+                    textarea.placeholder = item.placeholder || 'Votre réponse...';
+                    textarea.value = responses[index] || '';
+                    textarea.onchange = () => saveResponse(index, textarea.value);
+                    responseContainer.appendChild(textarea);
+                    break;
+
+                case 'yesno':
+                    const yesnoContainer = document.createElement('div');
+                    yesnoContainer.className = 'rating-scale';
+                    yesnoContainer.style.gridTemplateColumns = '1fr 1fr';
+                    
+                    ['Oui', 'Non'].forEach((option, i) => {
+                        const optionDiv = document.createElement('div');
+                        optionDiv.className = 'rating-option';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'radio';
+                        input.id = `q${index}_${option}`;
+                        input.name = `q${index}`;
+                        input.value = option;
+                        if (responses[index] === option) input.checked = true;
+                        input.onchange = () => saveResponse(index, option);
+                        
+                        const label = document.createElement('label');
+                        label.className = 'rating-label';
+                        label.htmlFor = `q${index}_${option}`;
+                        label.innerHTML = `<span class="rating-value">${option}</span>`;
+                        
+                        optionDiv.appendChild(input);
+                        optionDiv.appendChild(label);
+                        yesnoContainer.appendChild(optionDiv);
+                    });
+                    responseContainer.appendChild(yesnoContainer);
+                    break;
+
+                case 'radio':
+                    const radioContainer = document.createElement('div');
+                    radioContainer.style.display = 'grid';
+                    radioContainer.style.gap = '0.8rem';
+                    
+                    item.options.forEach(option => {
+                        const optionDiv = document.createElement('div');
+                        optionDiv.style.padding = '1rem';
+                        optionDiv.style.background = 'var(--bg-secondary)';
+                        optionDiv.style.borderRadius = '8px';
+                        optionDiv.style.border = '2px solid var(--border)';
+                        optionDiv.style.cursor = 'pointer';
+                        optionDiv.style.transition = 'all 0.3s ease';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'radio';
+                        input.id = `q${index}_${option}`;
+                        input.name = `q${index}`;
+                        input.value = option;
+                        if (responses[index] === option) {
+                            input.checked = true;
+                            optionDiv.style.background = 'var(--primary)';
+                            optionDiv.style.color = 'white';
+                            optionDiv.style.borderColor = 'var(--primary)';
+                        }
+                        input.onchange = () => {
+                            saveResponse(index, option);
+                            renderQuestions();
+                        };
+                        input.style.marginRight = '0.8rem';
+                        
+                        const label = document.createElement('label');
+                        label.htmlFor = `q${index}_${option}`;
+                        label.textContent = option;
+                        label.style.cursor = 'pointer';
+                        label.style.fontWeight = '500';
+                        
+                        optionDiv.appendChild(input);
+                        optionDiv.appendChild(label);
+                        radioContainer.appendChild(optionDiv);
+                        
+                        optionDiv.onclick = () => input.click();
+                    });
+                    responseContainer.appendChild(radioContainer);
+                    break;
+
+                case 'checkbox':
+                    const checkboxContainer = document.createElement('div');
+                    checkboxContainer.style.display = 'grid';
+                    checkboxContainer.style.gap = '0.8rem';
+                    
+                    const savedValues = responses[index] || [];
+                    
+                    item.options.forEach(option => {
+                        const optionDiv = document.createElement('div');
+                        optionDiv.style.padding = '1rem';
+                        optionDiv.style.background = 'var(--bg-secondary)';
+                        optionDiv.style.borderRadius = '8px';
+                        optionDiv.style.border = '2px solid var(--border)';
+                        optionDiv.style.cursor = 'pointer';
+                        optionDiv.style.transition = 'all 0.3s ease';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'checkbox';
+                        input.id = `q${index}_${option}`;
+                        input.value = option;
+                        if (savedValues.includes(option)) {
+                            input.checked = true;
+                            optionDiv.style.background = 'var(--accent)';
+                            optionDiv.style.color = 'white';
+                            optionDiv.style.borderColor = 'var(--accent)';
+                        }
+                        input.onchange = () => {
+                            let current = responses[index] || [];
+                            if (input.checked) {
+                                current.push(option);
+                            } else {
+                                current = current.filter(v => v !== option);
+                            }
+                            saveResponse(index, current);
+                            renderQuestions();
+                        };
+                        input.style.marginRight = '0.8rem';
+                        
+                        const label = document.createElement('label');
+                        label.htmlFor = `q${index}_${option}`;
+                        label.textContent = option;
+                        label.style.cursor = 'pointer';
+                        label.style.fontWeight = '500';
+                        
+                        optionDiv.appendChild(input);
+                        optionDiv.appendChild(label);
+                        checkboxContainer.appendChild(optionDiv);
+                        
+                        optionDiv.onclick = () => input.click();
+                    });
+                    responseContainer.appendChild(checkboxContainer);
+                    break;
+
+                case 'scale':
+                default:
+                    const scaleContainer = document.createElement('div');
+                    scaleContainer.className = 'rating-scale';
+                    
+                    const labels = item.scaleLabels || ['Non identifié', 'À surveiller', 'Partiel', 'Identifié'];
+                    
+                    labels.forEach((label, i) => {
+                        const optionDiv = document.createElement('div');
+                        optionDiv.className = 'rating-option';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'radio';
+                        input.id = `q${index}_${i}`;
+                        input.name = `q${index}`;
+                        input.value = i;
+                        if (responses[index] == i) input.checked = true;
+                        input.onchange = () => saveResponse(index, i);
+                        
+                        const labelElem = document.createElement('label');
+                        labelElem.className = 'rating-label';
+                        labelElem.htmlFor = `q${index}_${i}`;
+                        labelElem.innerHTML = `
+                            <span class="rating-value">${i}</span>
+                            <span class="rating-label-text">${label}</span>
+                        `;
+                        
+                        optionDiv.appendChild(input);
+                        optionDiv.appendChild(labelElem);
+                        scaleContainer.appendChild(optionDiv);
+                    });
+                    responseContainer.appendChild(scaleContainer);
+                    break;
+            }
+
+            block.appendChild(responseContainer);
+            fragment.appendChild(block);
+        });
+
+        container.innerHTML = '';
+        container.appendChild(fragment);
+
+        document.getElementById('progressText').textContent = `0 sur ${selectedItems.length} domaines évalués`;
+    }
+
+    function saveResponse(questionIndex, value) {
+        responses[questionIndex] = value;
+        updateProgress();
+    }
+
+    function updateProgress() {
+        const answered = Object.keys(responses).length;
+        const total = selectedItems.length;
+        const percentage = (answered / total) * 100;
+
+        document.getElementById('progressText').textContent = `${answered} sur ${total} domaines évalués`;
+        document.getElementById('progressFill').style.width = percentage + '%';
+    }
+
+    // ========================================
+    // PHASE RÉSULTATS
+    // ========================================
+    function goToResults() {
+        calculateAndDisplayResults();
+        switchPhase(3);
+    }
+
+    function calculateAndDisplayResults() {
+        const resultsByDomain = {};
+
+        Object.keys(itemsDatabase).forEach(domainId => {
+            resultsByDomain[domainId] = {
+                name: itemsDatabase[domainId].name,
+                icon: itemsDatabase[domainId].icon,
+                scores: [],
+                average: null,
+                details: []
+            };
+        });
+
+        selectedItems.forEach((item, index) => {
+            if (responses[index] !== undefined && responses[index] !== '') {
+                const response = responses[index];
+                
+                // Pour les scores numériques uniquement
+                if (typeof response === 'number') {
+                    resultsByDomain[item.domain].scores.push(response);
+                }
+                
+                // Ajouter tous les détails
+                resultsByDomain[item.domain].details.push({
+                    question: item.text,
+                    response: response
+                });
+            }
+        });
+
+        // Calculer les moyennes uniquement pour les domaines avec des scores numériques
+        Object.keys(resultsByDomain).forEach(domainId => {
+            const scores = resultsByDomain[domainId].scores;
+            if (scores.length > 0) {
+                resultsByDomain[domainId].average = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2);
+            }
+        });
+
+        const grid = document.getElementById('resultsGrid');
+        const fragment = document.createDocumentFragment();
+
+        Object.keys(resultsByDomain)
+            .filter(domainId => resultsByDomain[domainId].details.length > 0)
+            .forEach(domainId => {
+                const result = resultsByDomain[domainId];
+
+                const card = document.createElement('div');
+                card.className = 'result-card';
+
+                const icon = document.createElement('div');
+                icon.style.fontSize = '2rem';
+                icon.style.marginBottom = '0.5rem';
+                icon.textContent = result.icon;
+
+                const domainDiv = document.createElement('div');
+                domainDiv.className = 'result-domain';
+                domainDiv.textContent = result.name;
+
+                card.appendChild(icon);
+                card.appendChild(domainDiv);
+
+                if (result.average !== null) {
+                    const scoreDiv = document.createElement('div');
+                    scoreDiv.className = 'result-score';
+                    scoreDiv.innerHTML = result.average + '<span style="font-size: 1.5rem; color: var(--text-tertiary);">/3</span>';
+                    card.appendChild(scoreDiv);
+                }
+
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'result-label';
+                labelDiv.textContent = `${result.details.length} items évalués`;
+
+                card.appendChild(labelDiv);
+                fragment.appendChild(card);
+            });
+
+        grid.innerHTML = '';
+        grid.appendChild(fragment);
+
+        // Affichage du résumé qualitatif
+        renderQualitativeSummary(resultsByDomain);
+        
+        // Affichage détaillé
+        renderDetailedResults(resultsByDomain);
+    }
+
+    function renderQualitativeSummary(resultsByDomain) {
+        const container = document.getElementById('qualitativeSummary');
+        const fragment = document.createDocumentFragment();
+
+        const title = document.createElement('h3');
+        title.style.fontFamily = "'Bitter', serif";
+        title.style.color = 'var(--primary)';
+        title.style.marginBottom = '1.5rem';
+        title.style.marginTop = '2rem';
+        title.textContent = '📋 Synthèse qualitative';
+        fragment.appendChild(title);
+
+        const intro = document.createElement('p');
+        intro.style.marginBottom = '1.5rem';
+        intro.style.color = 'var(--text-secondary)';
+        intro.textContent = 'Reprise des informations qualitatives collectées lors de l\'évaluation :';
+        fragment.appendChild(intro);
+
+        // Regrouper les réponses par domaine
+        Object.keys(resultsByDomain)
+            .filter(domainId => resultsByDomain[domainId].details.length > 0)
+            .forEach(domainId => {
+                const result = resultsByDomain[domainId];
+                
+                // Filtrer uniquement les réponses non-numériques
+                const qualitativeDetails = result.details.filter(detail => {
+                    const response = detail.response;
+                    return response !== undefined && 
+                           response !== '' && 
+                           typeof response !== 'number';
+                });
+
+                if (qualitativeDetails.length > 0) {
+                    const domainCard = document.createElement('div');
+                    domainCard.className = 'card';
+                    domainCard.style.marginBottom = '1.5rem';
+                    domainCard.style.background = 'var(--bg-card)';
+                    domainCard.style.borderLeft = '4px solid var(--accent)';
+
+                    const header = document.createElement('h4');
+                    header.style.color = 'var(--primary)';
+                    header.style.marginBottom = '1rem';
+                    header.style.fontSize = '1.1rem';
+                    header.innerHTML = `${result.icon} ${result.name}`;
+                    domainCard.appendChild(header);
+
+                    qualitativeDetails.forEach(detail => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.style.padding = '1rem';
+                        itemDiv.style.background = 'var(--bg-secondary)';
+                        itemDiv.style.borderRadius = '8px';
+                        itemDiv.style.marginBottom = '0.8rem';
+                        itemDiv.style.borderLeft = '3px solid var(--accent-light)';
+
+                        const questionSpan = document.createElement('div');
+                        questionSpan.style.fontWeight = '600';
+                        questionSpan.style.marginBottom = '0.5rem';
+                        questionSpan.style.color = 'var(--primary-dark)';
+                        questionSpan.textContent = '→ ' + detail.question;
+
+                        const responseSpan = document.createElement('div');
+                        responseSpan.style.color = 'var(--text-primary)';
+                        responseSpan.style.paddingLeft = '1.2rem';
+                        responseSpan.style.fontSize = '0.95rem';
+                        
+                        // Formater la réponse selon le type
+                        if (Array.isArray(detail.response)) {
+                            // Pour les checkbox : afficher avec des puces
+                            if (detail.response.length > 0) {
+                                const list = document.createElement('ul');
+                                list.style.marginTop = '0.5rem';
+                                list.style.marginBottom = '0';
+                                list.style.paddingLeft = '1.5rem';
+                                detail.response.forEach(item => {
+                                    const li = document.createElement('li');
+                                    li.textContent = item;
+                                    li.style.marginBottom = '0.3rem';
+                                    list.appendChild(li);
+                                });
+                                responseSpan.appendChild(list);
+                            } else {
+                                responseSpan.textContent = 'Aucun élément sélectionné';
+                                responseSpan.style.fontStyle = 'italic';
+                            }
+                        } else {
+                            // Pour text, radio, yesno : afficher directement
+                            responseSpan.textContent = detail.response;
+                        }
+
+                        itemDiv.appendChild(questionSpan);
+                        itemDiv.appendChild(responseSpan);
+                        domainCard.appendChild(itemDiv);
+                    });
+
+                    fragment.appendChild(domainCard);
+                }
+            });
+
+        container.innerHTML = '';
+        container.appendChild(fragment);
+    }
+
+    function renderDetailedResults(resultsByDomain) {
+        const container = document.getElementById('detailedResults');
+        const fragment = document.createDocumentFragment();
+
+        const title = document.createElement('h3');
+        title.style.fontFamily = "'Bitter', serif";
+        title.style.color = 'var(--primary)';
+        title.style.marginBottom = '1.5rem';
+        title.style.marginTop = '2rem';
+        title.textContent = '📊 Évaluations quantitatives (échelle 0-3)';
+        fragment.appendChild(title);
+
+        // Filtrer uniquement les domaines avec des scores numériques
+        const domainsWithScores = Object.keys(resultsByDomain)
+            .filter(domainId => resultsByDomain[domainId].scores.length > 0);
+
+        if (domainsWithScores.length > 0) {
+            domainsWithScores.forEach(domainId => {
+                const result = resultsByDomain[domainId];
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.marginBottom = '1.5rem';
+
+                const header = document.createElement('h4');
+                header.style.color = 'var(--primary)';
+                header.style.marginBottom = '1rem';
+                header.innerHTML = `${result.icon} ${result.name} - Moyenne: ${result.average}/3`;
+
+                card.appendChild(header);
+
+                // Filtrer uniquement les détails avec scores numériques
+                const numericDetails = result.details.filter(detail => 
+                    typeof detail.response === 'number'
+                );
+
+                numericDetails.forEach(detail => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.style.padding = '0.8rem';
+                    itemDiv.style.background = 'var(--bg-secondary)';
+                    itemDiv.style.borderRadius = '8px';
+                    itemDiv.style.marginBottom = '0.5rem';
+                    itemDiv.style.display = 'flex';
+                    itemDiv.style.justifyContent = 'space-between';
+                    itemDiv.style.alignItems = 'center';
+                    itemDiv.style.gap = '1rem';
+
+                    const questionSpan = document.createElement('span');
+                    questionSpan.style.flex = '1';
+                    questionSpan.textContent = detail.question;
+
+                    const scoreSpan = document.createElement('span');
+                    scoreSpan.style.fontWeight = '700';
+                    scoreSpan.style.fontSize = '1.2rem';
+                    scoreSpan.style.color = 'var(--primary)';
+                    scoreSpan.textContent = detail.response + '/3';
+
+                    itemDiv.appendChild(questionSpan);
+                    itemDiv.appendChild(scoreSpan);
+                    card.appendChild(itemDiv);
+                });
+
+                fragment.appendChild(card);
+            });
+        } else {
+            const noDataMsg = document.createElement('p');
+            noDataMsg.style.color = 'var(--text-secondary)';
+            noDataMsg.style.fontStyle = 'italic';
+            noDataMsg.textContent = 'Aucune évaluation quantitative disponible.';
+            fragment.appendChild(noDataMsg);
+        }
+
+        container.innerHTML = '';
+        container.appendChild(fragment);
+    }
+
+    // ========================================
+    // IMPORT / EXPORT
+    // ========================================
+    function exportToCSV() {
+        let csv = '\uFEFF';
+        csv += 'Domaine,Question,Type,Réponse\n';
+
+        selectedItems.forEach((item, index) => {
+            let responseValue = responses[index];
+            if (responseValue !== undefined && responseValue !== '') {
+                const domain = Security.sanitizeCSVValue(item.domainName).replace(/"/g, '""');
+                const text = Security.sanitizeCSVValue(item.text).replace(/"/g, '""');
+                const type = item.type || 'scale';
+                
+                let responseStr = '';
+                if (Array.isArray(responseValue)) {
+                    responseStr = responseValue.join('; ');
+                } else {
+                    responseStr = String(responseValue);
+                }
+                responseStr = Security.sanitizeCSVValue(responseStr).replace(/"/g, '""');
+                
+                csv += `"${domain}","${text}","${type}","${responseStr}"\n`;
+            }
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `transition-eval-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function importConfiguration() {
+        const file = document.getElementById('importCSV').files[0];
+        if (!file) return;
+
+        if (!Security.validateFileSize(file)) {
+            Security.showAlert('Le fichier est trop volumineux (max 5 Mo).', 'error');
+            return;
+        }
+
+        document.getElementById('importFileName').textContent = Security.escapeHtml(file.name);
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const text = e.target.result;
+                const lines = text.split('\n');
+
+                selectedItems = [];
+                responses = {};
+                let warnings = 0;
+
+                lines.slice(1).forEach((line, lineIndex) => {
+                    if (!line.trim()) return;
+
+                    const matches = line.match(/(?:^|,)("(?:[^"]|"")*"|[^,]*)/g);
+                    if (!matches || matches.length < 3) return;
+
+                    let domain = matches[0].replace(/^,?"?|"?$/g, '').replace(/""/g, '"');
+                    let text = matches[1].replace(/^,?"?|"?$/g, '').replace(/""/g, '"');
+                    let score = matches[2].replace(/^,?"?|"?$/g, '');
+
+                    domain = Security.sanitizeCSVValue(domain);
+                    text = Security.sanitizeCSVValue(text);
+
+                    if (domain.startsWith("'") || text.startsWith("'")) {
+                        warnings++;
+                    }
+
+                    const domainId = Object.keys(itemsDatabase).find(d =>
+                        itemsDatabase[d].name === domain
+                    );
+
+                    if (domainId) {
+                        const item = {
+                            domain: domainId,
+                            domainName: domain,
+                            text: text,
+                            id: `${domainId}_${lineIndex}`
+                        };
+
+                        selectedItems.push(item);
+
+                        if (score !== '') {
+                            const validScore = Security.validateScore(score);
+                            if (validScore !== null) {
+                                responses[selectedItems.length - 1] = validScore;
+                            }
+                        }
+                    }
+                });
+
+                renderSelectedItems();
+                updateSelectedCount();
+
+                if (warnings > 0) {
+                    Security.showAlert(`Configuration importée avec ${warnings} formule(s) neutralisée(s).`, 'warning');
+                } else {
+                    Security.showAlert('Configuration importée avec succès !', 'success');
+                }
+            } catch (error) {
+                Security.showAlert('Erreur lors de l\'import. Vérifiez le format.', 'error');
+                console.error('Import error:', error);
+            }
+        };
+
+        reader.onerror = function() {
+            Security.showAlert('Impossible de lire le fichier.', 'error');
+        };
+
+        reader.readAsText(file);
+    }
+
+    function exportToPDF() {
+        window.print();
+    }
+
+    // ========================================
+    // NAVIGATION
+    // ========================================
+    function switchPhase(phaseNumber) {
+        document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+        document.getElementById(`phase${phaseNumber}`).classList.add('active');
+
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active', 'completed'));
+        document.querySelectorAll('.step').forEach((s, i) => {
+            if (i + 1 < phaseNumber) s.classList.add('completed');
+            if (i + 1 === phaseNumber) s.classList.add('active');
+        });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function backToConfiguration() {
+        switchPhase(1);
+    }
+
+    function backToEvaluation() {
+        switchPhase(2);
+    }
+
+    function resetAll() {
+        if (confirm('Voulez-vous vraiment recommencer ? Toutes les données seront perdues.')) {
+            selectedItems = [];
+            responses = {};
+            renderSelectedItems();
+            updateSelectedCount();
+            switchPhase(1);
+        }
+    }
+</script>
+```
+
+</body>
+</html>
